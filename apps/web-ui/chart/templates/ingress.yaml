@@ -1,0 +1,42 @@
+{{- if .Values.ingress.enabled }}
+# The single public entrypoint for the whole application.
+#
+# Owned by the web-ui chart rather than split across two charts: both rules
+# must share one host so Web UI and Core API present the same origin to the
+# browser, which is what makes the NextAuth session cookie work across them.
+# Two separate Ingress objects on one host would leave path precedence up to
+# the controller.
+#
+# Deliberately absent: recall-ai-service and recall-worker. They are ClusterIP
+# only and must not be reachable from outside the cluster.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: recall-tracker
+  labels:
+    app: recall-tracker
+spec:
+  {{- with .Values.ingress.className }}
+  ingressClassName: {{ . }}
+  {{- end }}
+  rules:
+    - host: {{ .Values.ingress.hostname }}
+      http:
+        paths:
+          # /api first: Prefix matching is longest-prefix-wins for most
+          # controllers, but ordering makes the intent explicit.
+          - path: /api
+            pathType: Prefix
+            backend:
+              service:
+                name: recall-core-api
+                port:
+                  number: {{ .Values.ingress.coreApiPort }}
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: recall-web-ui
+                port:
+                  number: {{ .Values.service.port }}
+{{- end }}

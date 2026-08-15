@@ -1,0 +1,6 @@
+apiVersion: v2
+name: recall-web-ui
+description: "Public web UI. Pages and client-side flag gating."
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
