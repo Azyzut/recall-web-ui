@@ -123,10 +123,23 @@ jobs:
               tag: ${{ inputs.version }}
             env:
               AUTH_TRUST_HOST: "true"
-              NEXTAUTH_URL: http://${{ vars.hostname }}
+              # https, not http. TLS terminates at the NLB, so the pod sees plain
+              # HTTP and no X-Forwarded-Proto — NextAuth would otherwise build
+              # http:// callback URLs for a site served over https, and issue
+              # secure cookies against a mismatched origin. The symptom is a login
+              # that fails as though the credentials were wrong.
+              NEXTAUTH_URL: https://${{ vars.hostname }}
             secretEnv:
               AUTH_SECRET: ${{ toJSON(secrets.AUTH_SECRET) }}
             ingress:
+              # Without a class, no controller claims the Ingress: `kubectl get
+              # ingress` shows CLASS <none> and an empty ADDRESS, and every request
+              # lands on the nginx default backend as a 404 that looks like a
+              # missing route rather than an unclaimed Ingress.
+              #
+              # The chart's default is "" — the convention for "use the cluster's
+              # default class" — and this cluster's nginx is not marked default.
+              className: nginx
               hostname: ${{ vars.hostname }}
 
       - name: Show what happened in the namespace
