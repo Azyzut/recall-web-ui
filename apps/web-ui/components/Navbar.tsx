@@ -13,10 +13,10 @@ const navThemeConfigs: Record<string, { badgeGradient: string; avatarBg: string;
     ctaHover: 'hover:bg-blue-500',
   },
   dark: {
-    badgeGradient: 'from-purple-500 to-pink-500',
-    avatarBg: 'bg-purple-600',
-    ctaBg: 'bg-purple-600',
-    ctaHover: 'hover:bg-purple-500',
+    badgeGradient: 'from-[#4D4D4D] to-[#B3B3B3]',
+    avatarBg: 'bg-[#333333]',
+    ctaBg: 'bg-[#333333]',
+    ctaHover: 'hover:bg-[#4D4D4D]',
   },
   smb: {
     badgeGradient: 'from-purple-500 to-pink-500',
@@ -25,10 +25,10 @@ const navThemeConfigs: Record<string, { badgeGradient: string; avatarBg: string;
     ctaHover: 'hover:bg-purple-500',
   },
   branded: {
-    badgeGradient: 'from-orange-500 to-red-500',
-    avatarBg: 'bg-orange-600',
-    ctaBg: 'bg-orange-600',
-    ctaHover: 'hover:bg-orange-500',
+    badgeGradient: 'from-[#0069FF] to-[#806FF6]',
+    avatarBg: 'bg-[#0069FF]',
+    ctaBg: 'bg-[#0069FF]',
+    ctaHover: 'hover:bg-[#3388FF]',
   },
 };
 

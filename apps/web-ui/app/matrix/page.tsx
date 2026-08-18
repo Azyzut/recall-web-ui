@@ -752,17 +752,20 @@ const matrixThemeConfigs: Record<string, {
     accentBorder: 'border-blue-500/30',
   },
   dark: {
-    iconGradient: 'from-purple-600 to-pink-500',
-    headerBg: 'bg-black/80',
-    shadow: 'shadow-purple-500/30',
-    avatarGradient: 'from-purple-500 to-pink-500',
-    ctaGradient: 'from-purple-600 to-pink-600',
-    ctaHover: 'hover:from-purple-500 hover:to-pink-500',
-    ctaShadow: 'shadow-purple-500/40',
-    dotColor: 'bg-purple-400',
-    fdaTab: 'bg-purple-600 border-purple-500 text-white',
-    cpscTab: 'bg-pink-600 border-pink-500 text-white',
-    accentBorder: 'border-purple-500/30',
+    // Genuinely neutral, from the brand grey scale. Previously this was a copy of
+    // `smb` differing only in headerBg, so the two were indistinguishable in the
+    // UI and the flag looked like it had a redundant option.
+    iconGradient: 'from-[#4D4D4D] to-[#B3B3B3]',
+    headerBg: 'bg-[#1A1A1A]/90',
+    shadow: 'shadow-black/50',
+    avatarGradient: 'from-[#333333] to-[#666666]',
+    ctaGradient: 'from-[#333333] to-[#4D4D4D]',
+    ctaHover: 'hover:from-[#4D4D4D] hover:to-[#666666]',
+    ctaShadow: 'shadow-black/60',
+    dotColor: 'bg-[#B3B3B3]',
+    fdaTab: 'bg-[#4D4D4D] border-[#666666] text-white',
+    cpscTab: 'bg-[#1A1A1A] border-[#4D4D4D] text-white',
+    accentBorder: 'border-[#666666]/40',
   },
   smb: {
     iconGradient: 'from-purple-600 to-pink-500',
@@ -778,17 +781,21 @@ const matrixThemeConfigs: Record<string, {
     accentBorder: 'border-purple-500/30',
   },
   branded: {
-    iconGradient: 'from-orange-500 to-red-500',
+    // Actual CloudBees colours: #0069FF primary blue, #806FF6 purple, #E6CEFF
+    // lavender. Previously orange-to-red, which appears nowhere in the palette.
+    // As the one theme that is recognisably somebody's brand, it carries the
+    // point of a string flag: the same product, re-skinned per customer.
+    iconGradient: 'from-[#0069FF] to-[#806FF6]',
     headerBg: 'bg-slate-900/50',
-    shadow: 'shadow-orange-500/30',
-    avatarGradient: 'from-orange-500 to-red-500',
-    ctaGradient: 'from-orange-500 to-red-600',
-    ctaHover: 'hover:from-orange-400 hover:to-red-500',
-    ctaShadow: 'shadow-orange-500/40',
-    dotColor: 'bg-orange-500',
-    fdaTab: 'bg-orange-600 border-orange-500 text-white',
-    cpscTab: 'bg-red-600 border-red-500 text-white',
-    accentBorder: 'border-orange-500/30',
+    shadow: 'shadow-[#0069FF]/30',
+    avatarGradient: 'from-[#0069FF] to-[#806FF6]',
+    ctaGradient: 'from-[#0069FF] to-[#806FF6]',
+    ctaHover: 'hover:from-[#3388FF] hover:to-[#9B8DF8]',
+    ctaShadow: 'shadow-[#0069FF]/40',
+    dotColor: 'bg-[#0069FF]',
+    fdaTab: 'bg-[#0069FF] border-[#0069FF] text-white',
+    cpscTab: 'bg-[#806FF6] border-[#806FF6] text-white',
+    accentBorder: 'border-[#E6CEFF]/40',
   },
 };
 

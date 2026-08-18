@@ -50,7 +50,8 @@ export default function FMProvider({ children }: { children: ReactNode }) {
           });
         }
 
-        const headerThemeFlag = new RoxBrowser.RoxString('default', ['default', 'smb']);
+        // Must match packages/shared/src/fm/flags.ts exactly — see the note there.
+        const headerThemeFlag = new RoxBrowser.RoxString('default', ['default', 'dark', 'smb', 'branded']);
         RoxBrowser.register('recall', { headerTheme: headerThemeFlag });
         await RoxBrowser.setup(fmKey);
 
