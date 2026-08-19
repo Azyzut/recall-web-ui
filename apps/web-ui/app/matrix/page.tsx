@@ -950,7 +950,18 @@ function MatrixContent() {
 
       if (!response.ok) {
         if (response.status === 404) {
-          return false; // No results yet - keep polling
+          // 404 means NO discoveries row exists for this company, and polling can
+          // never fix that. The worker creates the discoveries row BEFORE it starts
+          // scanning ("Created empty discovery ... progressive loading enabled"), so
+          // an in-progress discovery returns 200 with discoveryInProgress: true.
+          // A 404 therefore means a discovery was never started.
+          //
+          // This previously returned false to keep polling, so anyone reaching
+          // /matrix before discovering watched "Scanning recall databases..." for
+          // forty polls and then the page died. Stop, and say what to do.
+          setError('No discovery yet. Start one from the Discover page to build your compliance matrix.');
+          setInitialLoading(false);
+          return true;
         } else {
           setError(result.error || 'Failed to load compliance data');
           setInitialLoading(false);
