@@ -4,12 +4,23 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from '
 
 interface FMContextValue {
   isReady: boolean;
+  /**
+   * Increments each time the SDK fetches configuration. Present so that changing a
+   * flag in CloudBees Feature Management re-renders the tree without a page
+   * reload — the SDK was already re-fetching, but React had no reason to run
+   * getValue()/isEnabled() again, so the UI kept the values from first paint.
+   *
+   * Consumers do not need to read it. Its presence changes the context value's
+   * identity, which is what triggers the re-render.
+   */
+  configVersion: number;
   isEnabled: (flagName: string, defaultValue?: boolean) => boolean;
   getValue: (configName: string, defaultValue: string | number) => string | number;
 }
 
 const FMContext = createContext<FMContextValue>({
   isReady: false,
+  configVersion: 0,
   isEnabled: (_name, defaultValue = false) => defaultValue,
   getValue: (_name, defaultValue) => defaultValue,
 });
@@ -22,6 +33,7 @@ let roxInstance: any = null;
 
 export default function FMProvider({ children }: { children: ReactNode }) {
   const [isReady, setIsReady] = useState(false);
+  const [configVersion, setConfigVersion] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -53,7 +65,19 @@ export default function FMProvider({ children }: { children: ReactNode }) {
         // Must match packages/shared/src/fm/flags.ts exactly — see the note there.
         const headerThemeFlag = new RoxBrowser.RoxString('default', ['default', 'dark', 'smb', 'branded']);
         RoxBrowser.register('recall', { headerTheme: headerThemeFlag });
-        await RoxBrowser.setup(fmKey);
+        await RoxBrowser.setup(fmKey, {
+          // The SDK polls for configuration; the default interval is a minute.
+          // 30s keeps a live demo responsive without hammering the service.
+          fetchIntervalInSec: 30,
+          // Called after every fetch. Bumping state here is the whole fix: it
+          // re-renders consumers so getValue() and isEnabled() run again against
+          // the newly fetched configuration. Without it the SDK updated itself
+          // and React had no reason to ask again, so the UI kept the values from
+          // first paint until a reload.
+          configurationFetchedHandler: () => {
+            if (!cancelled) setConfigVersion(v => v + 1);
+          },
+        });
 
         if (!cancelled) {
           roxInstance = RoxBrowser;
@@ -70,6 +94,7 @@ export default function FMProvider({ children }: { children: ReactNode }) {
 
   const contextValue: FMContextValue = {
     isReady,
+    configVersion,
     isEnabled: (flagName: string, defaultValue = false): boolean => {
       if (!roxInstance) return defaultValue;
       try { return roxInstance.dynamicApi.isEnabled(flagName, defaultValue); }
