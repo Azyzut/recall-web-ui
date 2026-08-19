@@ -63,7 +63,7 @@ export default function FMProvider({ children }: { children: ReactNode }) {
         }
 
         // Must match packages/shared/src/fm/flags.ts exactly — see the note there.
-        const headerThemeFlag = new RoxBrowser.RoxString('default', ['default', 'dark', 'smb', 'branded']);
+        const headerThemeFlag = new RoxBrowser.RoxString('default', ['default', 'dark', 'vibrant', 'branded']);
         RoxBrowser.register('recall', { headerTheme: headerThemeFlag });
         await RoxBrowser.setup(fmKey, {
           // The SDK polls for configuration; the default interval is a minute.

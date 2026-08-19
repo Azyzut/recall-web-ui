@@ -767,7 +767,7 @@ const matrixThemeConfigs: Record<string, {
     cpscTab: 'bg-[#1A1A1A] border-[#4D4D4D] text-white',
     accentBorder: 'border-[#666666]/40',
   },
-  smb: {
+  vibrant: {
     iconGradient: 'from-purple-600 to-pink-500',
     headerBg: 'bg-slate-900/50',
     shadow: 'shadow-purple-500/30',

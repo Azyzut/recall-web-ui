@@ -18,7 +18,7 @@ const navThemeConfigs: Record<string, { badgeGradient: string; avatarBg: string;
     ctaBg: 'bg-[#333333]',
     ctaHover: 'hover:bg-[#4D4D4D]',
   },
-  smb: {
+  vibrant: {
     badgeGradient: 'from-purple-500 to-pink-500',
     avatarBg: 'bg-purple-600',
     ctaBg: 'bg-purple-600',
