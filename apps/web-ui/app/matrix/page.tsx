@@ -815,6 +815,19 @@ function MatrixContent() {
   const [expandedReqs, setExpandedReqs] = useState<Set<string>>(new Set());
   const [chatMessage, setChatMessage] = useState('');
   const [pollCount, setPollCount] = useState(0);
+  // Wall-clock seconds since polling began. Derived from a 1s interval rather than
+  // from pollCount, because the poll interval is 15s and multiplying it made the
+  // timer jump 0:00 -> 0:15 -> 0:30, which reads like the page is stalling.
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
+
+  useEffect(() => {
+    if (!polling) {
+      setElapsedSeconds(0);
+      return;
+    }
+    const id = setInterval(() => setElapsedSeconds(n => n + 1), 1000);
+    return () => clearInterval(id);
+  }, [polling]);
   const [visibleCount, setVisibleCount] = useState(0);
   const [chatExpanded, setChatExpanded] = useState(false);
   // Chat agent state
@@ -1903,7 +1916,7 @@ function MatrixContent() {
                         {data ? `Found ${visibleCount} recall${visibleCount !== 1 ? 's' : ''}` : 'Scanning recall databases...'}
                       </span>
                       <span className="text-xs text-slate-500">
-                        {pollCount > 0 && `${Math.floor((pollCount * 15) / 60)}:${((pollCount * 15) % 60).toString().padStart(2, '0')}`}
+                        {elapsedSeconds > 0 && `${Math.floor(elapsedSeconds / 60)}:${(elapsedSeconds % 60).toString().padStart(2, '0')}`}
                       </span>
                     </div>
                     <div className="h-2 bg-slate-800 rounded-full overflow-hidden">
