@@ -66,8 +66,12 @@ export default function FMProvider({ children }: { children: ReactNode }) {
         const headerThemeFlag = new RoxBrowser.RoxString('default', ['default', 'dark', 'vibrant', 'branded']);
         RoxBrowser.register('recall', { headerTheme: headerThemeFlag });
         await RoxBrowser.setup(fmKey, {
-          // The SDK polls for configuration; the default interval is a minute.
-          // 30s keeps a live demo responsive without hammering the service.
+          // Changes arrive over Server-Sent Events, so they propagate within a
+          // second or two of being saved in the UI — not on this interval. This is
+          // only the fallback poll for when the SSE connection is unavailable.
+          //
+          // Measured at ~2s in practice. Module 07 can therefore promise "watch it
+          // change" rather than asking attendees to wait or reload.
           fetchIntervalInSec: 30,
           // Called after every fetch. Bumping state here is the whole fix: it
           // re-renders consumers so getValue() and isEnabled() run again against
