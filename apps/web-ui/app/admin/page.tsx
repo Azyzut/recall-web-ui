@@ -3,7 +3,10 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 
-const DEFAULT_PASSWORD = 'recall-admin-2024';
+// Deliberately no default. This page previously prefilled and DISPLAYED
+// 'recall-admin-2024', which put the admin password on screen for anyone who
+// opened /admin — in a repository attendees copy.
+const DEFAULT_PASSWORD = '';
 
 interface CompanyUser {
   id: string;
@@ -202,7 +205,6 @@ export default function AdminPage() {
           </form>
 
           <p className="text-gray-500 text-xs text-center mt-4">
-            Default: {DEFAULT_PASSWORD}
           </p>
         </div>
       </div>
