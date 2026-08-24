@@ -2,7 +2,7 @@
 
 import { useState, Suspense } from 'react';
 import { signIn } from 'next-auth/react';
-import { useRouter, useSearchParams, notFound } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 
 function LoginContent() {
@@ -16,13 +16,7 @@ function LoginContent() {
   const [rememberMe, setRememberMe] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState(error ? 'Invalid credentials' : '');
-  const [triggerNotFound, setTriggerNotFound] = useState(false);
-
-  // FM demo kill switch — when recall.errorState is on, /api/auth/redirect
-  // responds 404 and we render Next's not-found (404) page.
-  if (triggerNotFound) {
-    notFound();
-  }
+  const [maintenance, setMaintenance] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -43,9 +37,14 @@ function LoginContent() {
         // Get dynamic redirect based on user's company status
         try {
           const redirectRes = await fetch('/api/auth/redirect');
-          // FM kill switch (recall.errorState) — server returns 404, show 404 page
-          if (redirectRes.status === 404) {
-            setTriggerNotFound(true);
+          // FM kill switch (recall.errorState). The service is closed, so say so — and say
+          // the same thing a refresh says. This rendered a raw 404 before, which read as a
+          // broken route rather than a deliberate control, and did not match the message
+          // /api/compliance/me returns on a reload.
+          if (redirectRes.status === 503) {
+            const body = await redirectRes.json().catch(() => ({}));
+            setMaintenance(body.error || "Temporarily unavailable. Please try again shortly.");
+            setIsLoading(false);
             return;
           }
           const redirectData = await redirectRes.json();
@@ -75,6 +74,13 @@ function LoginContent() {
         {/* Login Card */}
         <div className="bg-slate-900/50 backdrop-blur-xl border border-slate-700/50 rounded-2xl p-8 shadow-2xl">
           <h2 className="text-xl font-semibold text-white mb-6">Sign in to your account</h2>
+
+          {maintenance && (
+            <div className="mb-4 rounded-lg border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-200">
+              <div className="font-semibold mb-1">Service temporarily unavailable</div>
+              {maintenance}
+            </div>
+          )}
 
           {errorMessage && (
             <div className="mb-4 p-3 bg-red-500/10 border border-red-500/50 rounded-lg text-red-400 text-sm">
