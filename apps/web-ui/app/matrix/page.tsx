@@ -949,6 +949,19 @@ function MatrixContent() {
       const result = await response.json();
 
       if (!response.ok) {
+        // FM kill switch (recall.errorState). The service is closed, so an
+        // authenticated session must not survive it: end the session and return to
+        // the login page, which refuses to let anyone back in while the flag is on.
+        //
+        // Rendering an error in place here was worse. This page assumes it will get
+        // data, so a 503 reached code paths that had none and tripped Next's error
+        // boundary -- "This page couldn't load", with a Reload button that did it
+        // all again.
+        if (response.status === 503) {
+          await signOut({ redirect: false });
+          window.location.href = '/login?maintenance=1';
+          return true;
+        }
         if (response.status === 404) {
           // 404 means NO discoveries row exists for this company, and polling can
           // never fix that. The worker creates the discoveries row BEFORE it starts

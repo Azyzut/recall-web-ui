@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, Suspense } from 'react';
-import { signIn } from 'next-auth/react';
+import { signIn, signOut } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 
@@ -16,7 +16,13 @@ function LoginContent() {
   const [rememberMe, setRememberMe] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState(error ? 'Invalid credentials' : '');
-  const [maintenance, setMaintenance] = useState<string | null>(null);
+  // Seeded from the query string so that being sent back here from a closed page
+  // explains itself, rather than looking like a stray logout.
+  const [maintenance, setMaintenance] = useState<string | null>(
+    searchParams.get('maintenance')
+      ? 'Recall Tracker is temporarily unavailable. Please try logging in again shortly.'
+      : null
+  );
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -43,7 +49,10 @@ function LoginContent() {
           // /api/compliance/me returns on a reload.
           if (redirectRes.status === 503) {
             const body = await redirectRes.json().catch(() => ({}));
-            setMaintenance(body.error || "Temporarily unavailable. Please try again shortly.");
+            // Discard the session signIn just established. Leaving it in place let a
+            // refresh sail past this screen into a page that could not load.
+            await signOut({ redirect: false });
+            setMaintenance((body.error ? body.error + ' ' : '') + 'Please try logging in again shortly.');
             setIsLoading(false);
             return;
           }
