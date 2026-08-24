@@ -1,6 +1,7 @@
 'use client';
 
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
+import { useSession } from 'next-auth/react';
 
 interface FMContextValue {
   isReady: boolean;
@@ -31,9 +32,24 @@ export function useFM() {
 
 let roxInstance: any = null;
 
+/**
+ * Custom properties are what targeting rules read. They live on the SDK instance,
+ * so they must be re-applied whenever the identity changes.
+ */
+function applyProps(rox: any, props: Record<string, unknown> | undefined | null) {
+  if (!props) return;
+  for (const [key, value] of Object.entries(props)) {
+    if (typeof value === 'string') rox.setCustomStringProperty(key, value);
+    else if (typeof value === 'number') rox.setCustomNumberProperty(key, value);
+    else if (typeof value === 'boolean') rox.setCustomBooleanProperty(key, value);
+  }
+}
+
 export default function FMProvider({ children }: { children: ReactNode }) {
   const [isReady, setIsReady] = useState(false);
   const [configVersion, setConfigVersion] = useState(0);
+  const { data: session, status } = useSession();
+  const userId = session?.user?.id ?? null;
 
   useEffect(() => {
     let cancelled = false;
@@ -48,13 +64,7 @@ export default function FMProvider({ children }: { children: ReactNode }) {
 
         const RoxBrowser = (await import('rox-browser')).default;
 
-        if (props) {
-          for (const [key, value] of Object.entries(props)) {
-            if (typeof value === 'string') RoxBrowser.setCustomStringProperty(key, value);
-            else if (typeof value === 'number') RoxBrowser.setCustomNumberProperty(key, value);
-            else if (typeof value === 'boolean') RoxBrowser.setCustomBooleanProperty(key, value);
-          }
-        }
+        applyProps(RoxBrowser, props);
 
         if (typeof localStorage !== 'undefined') {
           Object.keys(localStorage).forEach(key => {
@@ -95,6 +105,36 @@ export default function FMProvider({ children }: { children: ReactNode }) {
     init();
     return () => { cancelled = true; };
   }, []);
+
+  // Signing in does not remount this provider: NextAuth updates the session and the
+  // app navigates client-side, so the SDK keeps the properties fetched for whoever
+  // was here before -- usually nobody. Any flag targeted on companySize, email or
+  // isLoggedIn therefore evaluated against an anonymous context until a full reload.
+  //
+  // The visible symptom was "headerTheme stays on default until I refresh", but it
+  // applied to every targeted flag, not just the theme.
+  //
+  // Re-fetching properties on an identity change is enough: Rox evaluates locally
+  // against whatever properties are set, so setup() must NOT run again. Bumping
+  // configVersion re-runs the evaluations.
+  useEffect(() => {
+    if (!isReady || !roxInstance) return;
+    if (status === 'loading') return;
+
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch('/api/fm-config');
+        const { props } = await res.json();
+        if (cancelled) return;
+        applyProps(roxInstance, props);
+        setConfigVersion(v => v + 1);
+      } catch (err) {
+        console.warn('[FM] Could not refresh targeting properties:', err);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [isReady, status, userId]);
 
   const contextValue: FMContextValue = {
     isReady,

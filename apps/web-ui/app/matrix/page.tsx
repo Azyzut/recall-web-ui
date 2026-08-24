@@ -1656,6 +1656,10 @@ function MatrixContent() {
 
         {/* Determine if we should show the right column */}
         {(() => {
+          // The wrapper below is `hidden lg:block` only while collapsed. It used to be
+          // unconditional, so below 1024px the chat panel was display:none: clicking the
+          // launcher set chatExpanded, the launcher unmounted because it renders only
+          // while collapsed, and nothing replaced it — the button appeared to vanish.
           const showRightColumn = polling || (data?.discoveryInProgress) || chatExpanded;
           const isDiscoveryComplete = data && !data.discoveryInProgress;
 
@@ -1899,7 +1903,7 @@ function MatrixContent() {
 
           {/* Right Column - Discovery Progress / Chat - Only show during discovery or when chat expanded */}
           {showRightColumn && (
-            <div className={`flex-shrink-0 hidden lg:block transition-all duration-300 ${chatExpanded ? 'w-[480px]' : 'w-80'}`}>
+            <div className={`flex-shrink-0 transition-all duration-300 ${chatExpanded ? 'block w-full lg:w-[480px]' : 'hidden lg:block w-80'}`}>
               <div className="bg-slate-900/50 backdrop-blur rounded-2xl border border-slate-800/50 sticky top-24 flex flex-col overflow-hidden max-h-[calc(100vh-7rem)]">
 
                 {/* Discovery Progress Panel - shown during active discovery */}
