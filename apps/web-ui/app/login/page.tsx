@@ -43,7 +43,7 @@ function LoginContent() {
         // Get dynamic redirect based on user's company status
         try {
           const redirectRes = await fetch('/api/auth/redirect');
-          // FM kill switch (recall.errorState). The service is closed, so say so — and say
+          // FM kill switch (recall.dashboardRedesign). The service is closed, so say so — and say
           // the same thing a refresh says. This rendered a raw 404 before, which read as a
           // broken route rather than a deliberate control, and did not match the message
           // /api/compliance/me returns on a reload.

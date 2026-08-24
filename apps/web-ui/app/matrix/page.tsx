@@ -949,7 +949,7 @@ function MatrixContent() {
       const result = await response.json();
 
       if (!response.ok) {
-        // FM kill switch (recall.errorState). The service is closed, so an
+        // FM kill switch (recall.dashboardRedesign). The service is closed, so an
         // authenticated session must not survive it: end the session and return to
         // the login page, which refuses to let anyone back in while the flag is on.
         //
