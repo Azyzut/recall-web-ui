@@ -12,15 +12,26 @@
 // The load generator sends real HTTP requests from this browser to a real endpoint.
 // Nothing is simulated. That matters when a customer asks.
 //
-// Colour: Blue #0069FF is CloudBees Blue. The red is a functional status colour
-// only — there is no red in the CloudBees palette — so it is defined once here and
-// easy to change if brand review objects.
+// STYLING: deliberately matched to demo/progressive-rollout.html in the SE guide,
+// so the two screens read as one set when shown back to back — white ground,
+// CloudBees Blue, Black 40 bars, swatch-labelled sections, one type scale, and a
+// slider handle big enough to hit while presenting.
+//
+// Colour: Blue #0069FF is CloudBees Blue and Black 40 #CCCCCC is the grey scale.
+// The red is a functional status colour only — there is no red in the CloudBees
+// palette — so it is defined once here and easy to change if brand review objects.
+// It stays red because the entire job of this panel is to make failure read as
+// failure from across a room.
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 
-const OK_COLOR = '#0069FF';
-const ERR_COLOR = '#E5484D';
+const BLUE = '#0069FF'; // CloudBees Blue — served
+const RED = '#E5484D'; // functional status colour — failed
+const GREY = '#CCCCCC'; // Black 40
+const INK = '#1A1A1A'; // Black 100
+const BODY = '#666666'; // Black 70
+const LINE = '#E6E6E6'; // Black 30
 
 const TARGETS = [
   { label: '/api/auth/redirect', url: '/api/auth/redirect' },
@@ -50,6 +61,25 @@ function clock(ts: number): string {
 
 function utc(ts: number): string {
   return new Date(ts).toISOString().replace('T', ' ').replace(/\.\d+Z$/, 'Z');
+}
+
+/** Section label with a colour swatch, exactly as the rollout page does it. */
+function Sub({ color, children, right }: {
+  color: string; children: React.ReactNode; right?: React.ReactNode;
+}) {
+  return (
+    <p style={{
+      display: 'flex', alignItems: 'center', gap: '0.4em',
+      color: BODY, margin: 0, fontSize: 'var(--t)', lineHeight: 1.15,
+    }}>
+      <span style={{
+        display: 'inline-block', width: '0.62em', height: '0.62em',
+        borderRadius: '0.12em', background: color, flex: 'none',
+      }} />
+      {children}
+      {right && <span style={{ marginLeft: 'auto', fontVariantNumeric: 'tabular-nums' }}>{right}</span>}
+    </p>
+  );
 }
 
 export default function MetricsPage() {
@@ -129,23 +159,25 @@ export default function MetricsPage() {
     const peak = Math.max(1, ...buckets.map(b => b.ok + b.err));
     const bw = W / buckets.length;
 
+    // Grey below, red above — the same stacking the rollout page uses, so a
+    // change in the mix reads as a change in shape rather than in shade.
     buckets.forEach((b, i) => {
       const x = i * bw;
       const okH = (b.ok / peak) * H;
       const errH = (b.err / peak) * H;
-      ctx.fillStyle = OK_COLOR;
-      ctx.fillRect(x, H - okH, bw - 1, okH);
-      ctx.fillStyle = ERR_COLOR;
-      ctx.fillRect(x, H - okH - errH, bw - 1, errH);
+      ctx.fillStyle = GREY;
+      ctx.fillRect(x, H - okH, bw - 4, okH);
+      ctx.fillStyle = RED;
+      ctx.fillRect(x, H - okH - errH, bw - 4, errH);
     });
 
     // Vertical rule wherever the server received new flag configuration. This is
     // the moment the answers changed, drawn against the moment failures began.
     const first = buckets[0]?.t ?? 0;
     const span = buckets.length * data.bucketMs;
-    ctx.strokeStyle = '#1A1A1A';
-    ctx.lineWidth = 2;
-    ctx.setLineDash([5, 4]);
+    ctx.strokeStyle = INK;
+    ctx.lineWidth = 3;
+    ctx.setLineDash([10, 8]);
     for (const c of data.configChanges) {
       const x = ((c.ts - first) / span) * W;
       if (x < 0 || x > W) continue;
@@ -166,11 +198,25 @@ export default function MetricsPage() {
     }).catch(() => {});
   };
 
+  // One knob for every piece of text, as on the rollout page. Nothing smaller.
+  const shell: React.CSSProperties = {
+    ['--t' as string]: '40px',
+    ['--sq' as string]: '44px',
+    minHeight: '100vh',
+    background: '#fff',
+    color: INK,
+    font: 'var(--t)/1.15 "Unica 77", Arial, Helvetica, sans-serif',
+    padding: '32px 40px 40px',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 18,
+  };
+
   if (!password) {
     return (
-      <div className="min-h-screen bg-gray-900 flex items-center justify-center p-8">
+      <div style={{ ...shell, alignItems: 'center', justifyContent: 'center' }}>
         <form
-          className="w-full max-w-sm space-y-4"
+          style={{ display: 'flex', flexDirection: 'column', gap: 16, width: 'min(560px, 90%)' }}
           onSubmit={e => {
             e.preventDefault();
             localStorage.setItem('adminPassword', entered);
@@ -182,11 +228,20 @@ export default function MetricsPage() {
             value={entered}
             onChange={e => setEntered(e.target.value)}
             placeholder="Admin password"
-            className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded text-white"
             autoFocus
+            style={{
+              font: 'inherit', fontSize: 'var(--t)', padding: '0.16em 0.3em',
+              border: `2px solid ${LINE}`, borderRadius: '0.14em', color: INK,
+            }}
           />
-          <button type="submit" className="w-full py-3 rounded text-white font-medium"
-                  style={{ background: OK_COLOR }}>
+          <button
+            type="submit"
+            style={{
+              font: 'inherit', fontSize: 'var(--t)', padding: '0.16em 0.3em',
+              background: BLUE, color: '#fff', border: `2px solid ${BLUE}`,
+              borderRadius: '0.14em', cursor: 'pointer',
+            }}
+          >
             Open
           </button>
         </form>
@@ -198,122 +253,152 @@ export default function MetricsPage() {
     ? data.buckets.slice(-30).reduce((n, b) => n + b.err, 0)
     : 0;
 
-  return (
-    <div className="min-h-screen bg-gray-900 text-white p-8">
-      <div className="max-w-6xl mx-auto space-y-8">
+  const btn: React.CSSProperties = {
+    font: 'inherit', fontSize: 'var(--t)', lineHeight: 1,
+    padding: '0.12em 0.34em', cursor: 'pointer',
+    color: INK, background: '#fff',
+    border: `2px solid ${LINE}`, borderRadius: '0.14em',
+  };
 
-        <div className="flex items-baseline gap-8 flex-wrap">
-          <h1 className="text-xl font-semibold">Failures</h1>
-          <div className="text-6xl font-bold tabular-nums"
-               style={{ color: recentWindow ? ERR_COLOR : '#666' }}>
+  return (
+    <div style={shell}>
+      <style>{`
+        .mx-range { -webkit-appearance: none; appearance: none; background: transparent;
+                    cursor: pointer; height: var(--sq); margin: 0; flex: 1 1 240px; }
+        .mx-range::-webkit-slider-runnable-track { height: 12px; background: ${LINE};
+                                                   border-radius: 999px; }
+        .mx-range::-webkit-slider-thumb { -webkit-appearance: none; width: var(--sq);
+                                          height: var(--sq); border-radius: 50%;
+                                          background: ${BLUE}; border: none;
+                                          margin-top: calc((12px - var(--sq)) / 2); }
+        .mx-range::-moz-range-track { height: 12px; background: ${LINE}; border-radius: 999px; }
+        .mx-range::-moz-range-thumb { width: var(--sq); height: var(--sq); border-radius: 50%;
+                                      background: ${BLUE}; border: none; }
+      `}</style>
+
+      <header style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+        <h1 style={{ fontSize: 'var(--t)', fontWeight: 700, margin: 0, letterSpacing: '-0.02em' }}>
+          Failure rate
+        </h1>
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: 24, flexWrap: 'wrap' }}>
+          <span style={{ color: BODY }}>Failures, last 60s:</span>
+          <span style={{
+            fontSize: 'calc(var(--t) * 1.7)', fontWeight: 700, lineHeight: 1,
+            letterSpacing: '-0.03em', fontVariantNumeric: 'tabular-nums',
+            color: recentWindow ? RED : GREY,
+          }}>
             {recentWindow}
-          </div>
-          <span className="text-gray-500 text-sm self-end pb-2">last 60s</span>
+          </span>
 
           {data?.firstErrorAt && (
-            <div className="ml-auto text-right">
-              <div className="text-4xl font-bold tabular-nums" style={{ color: ERR_COLOR }}>
+            <span style={{ marginLeft: 'auto', textAlign: 'right' }}>
+              <span style={{
+                display: 'block', color: RED, fontWeight: 700,
+                fontVariantNumeric: 'tabular-nums',
+              }}>
                 {clock(data.firstErrorAt)}
-              </div>
-              <div className="text-gray-500 text-xs tabular-nums">
+              </span>
+              <span style={{
+                display: 'block', color: BODY, fontSize: 'calc(var(--t) * 0.5)',
+                fontVariantNumeric: 'tabular-nums',
+              }}>
                 {utc(data.firstErrorAt)} · first failure
-              </div>
-            </div>
-          )}
-        </div>
-
-        {error && (
-          <div className="rounded border border-gray-700 bg-gray-800 px-4 py-3 text-sm text-gray-300">
-            {error}
-          </div>
-        )}
-
-        <canvas ref={canvas} width={1800} height={340} className="w-full block" />
-
-        <div className="flex items-center gap-6 text-sm text-gray-400 flex-wrap">
-          <span><i className="inline-block w-3 h-3 rounded-sm mr-2" style={{ background: OK_COLOR }} />Served</span>
-          <span><i className="inline-block w-3 h-3 rounded-sm mr-2" style={{ background: ERR_COLOR }} />Failed</span>
-          <span className="text-gray-500">┆ flag configuration changed</span>
-        </div>
-
-        <div className="flex items-center gap-4 flex-wrap">
-          <button
-            onClick={() => setRunning(r => !r)}
-            className="px-5 py-2 rounded font-medium text-white"
-            style={{ background: running ? ERR_COLOR : OK_COLOR }}
-          >
-            {running ? 'Stop traffic' : 'Send traffic'}
-          </button>
-
-          <select
-            value={target}
-            onChange={e => setTarget(e.target.value)}
-            className="bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm"
-          >
-            {TARGETS.map(t => <option key={t.url} value={t.url}>{t.label}</option>)}
-          </select>
-
-          <label className="text-sm text-gray-400 flex items-center gap-2">
-            <input
-              type="range" min={1} max={20} value={rate}
-              onChange={e => setRate(+e.target.value)}
-              style={{ accentColor: OK_COLOR }}
-            />
-            <span className="tabular-nums w-14">{rate}/sec</span>
-          </label>
-
-          <button onClick={clear} className="px-4 py-2 rounded border border-gray-700 text-sm text-gray-300">
-            Reset
-          </button>
-
-          {running && lastStatus === 401 && (
-            <span className="text-sm" style={{ color: ERR_COLOR }}>
-              401 — sign in first, or the graph means nothing
+              </span>
             </span>
           )}
-
-          <Link href="/admin" className="ml-auto text-sm text-gray-500 hover:text-gray-300">
-            Admin
-          </Link>
         </div>
+      </header>
 
-        {data && (
-          <div className="flex gap-3 flex-wrap">
-            {Object.entries(data.flags).map(([name, on]) => (
-              <span
-                key={name}
-                className="px-3 py-1 rounded-full text-sm border"
-                style={{
-                  borderColor: on ? OK_COLOR : '#374151',
-                  color: on ? OK_COLOR : '#6B7280',
-                }}
-              >
-                {name.replace('recall.', '')}
-              </span>
-            ))}
-            {!data.fmReady && (
-              <span className="px-3 py-1 text-sm text-gray-500">
-                FM_KEY not set — flags are showing their code defaults
-              </span>
-            )}
-          </div>
-        )}
+      {error && (
+        <p style={{ color: RED, margin: 0 }}>{error}</p>
+      )}
 
-        {data && data.recent.length > 0 && (
-          <table className="w-full text-sm">
-            <tbody>
-              {data.recent.slice(0, 8).map((f, i) => (
-                <tr key={i} className="border-t border-gray-800">
-                  <td className="py-2 text-gray-500 tabular-nums w-24">{clock(f.ts)}</td>
-                  <td className="py-2 tabular-nums w-16" style={{ color: ERR_COLOR }}>{f.status}</td>
-                  <td className="py-2 text-gray-400">{f.route}</td>
-                  <td className="py-2 text-gray-500">{f.flag ?? ''}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 24, flexWrap: 'wrap' }}>
+        <button
+          onClick={() => setRunning(r => !r)}
+          style={{ ...btn, background: running ? RED : BLUE, borderColor: running ? RED : BLUE, color: '#fff' }}
+        >
+          {running ? 'Stop traffic' : 'Send traffic'}
+        </button>
+
+        <select
+          value={target}
+          onChange={e => setTarget(e.target.value)}
+          style={btn}
+        >
+          {TARGETS.map(t => <option key={t.url} value={t.url}>{t.label}</option>)}
+        </select>
+
+        <input
+          className="mx-range"
+          type="range" min={1} max={20} value={rate}
+          onChange={e => setRate(+e.target.value)}
+          aria-label="Requests per second"
+        />
+        <span style={{ color: BODY, fontVariantNumeric: 'tabular-nums' }}>{rate}/sec</span>
+
+        <button onClick={clear} style={btn}>Reset</button>
       </div>
+
+      {running && lastStatus === 401 && (
+        <p style={{ color: RED, margin: 0 }}>401 — sign in first, or the graph means nothing</p>
+      )}
+
+      <Sub color={RED} right={data ? `${data.totalErr} of ${data.totalOk + data.totalErr}` : undefined}>
+        Requests that failed:
+      </Sub>
+
+      <canvas
+        ref={canvas}
+        width={2000}
+        height={680}
+        style={{ width: '100%', height: 340, display: 'block' }}
+      />
+
+      <Sub color={BLUE}>Flags currently on</Sub>
+
+      {data && (
+        <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+          {Object.entries(data.flags).map(([name, on]) => (
+            <span
+              key={name}
+              style={{
+                padding: '0.1em 0.34em', borderRadius: '0.14em',
+                border: `2px solid ${on ? BLUE : LINE}`,
+                color: on ? BLUE : GREY,
+              }}
+            >
+              {name.replace('recall.', '')}
+            </span>
+          ))}
+          {!data.fmReady && (
+            <span style={{ color: BODY }}>FM_KEY not set — showing code defaults</span>
+          )}
+        </div>
+      )}
+
+      {data && data.recent.length > 0 && (
+        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 'calc(var(--t) * 0.6)' }}>
+          <tbody>
+            {data.recent.slice(0, 6).map((f, i) => (
+              <tr key={i} style={{ borderTop: `2px solid ${LINE}` }}>
+                <td style={{ padding: '0.3em 0', color: BODY, fontVariantNumeric: 'tabular-nums', width: '8em' }}>
+                  {clock(f.ts)}
+                </td>
+                <td style={{ padding: '0.3em 0', color: RED, fontVariantNumeric: 'tabular-nums', width: '4em' }}>
+                  {f.status}
+                </td>
+                <td style={{ padding: '0.3em 0', color: INK }}>{f.route}</td>
+                <td style={{ padding: '0.3em 0', color: BODY }}>{f.flag ?? ''}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+
+      <Link href="/admin" style={{ color: BODY, fontSize: 'calc(var(--t) * 0.6)' }}>
+        Admin
+      </Link>
     </div>
   );
 }
