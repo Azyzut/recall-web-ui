@@ -3,9 +3,10 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 
-// Deliberately no default. This page previously prefilled and DISPLAYED
-// 'recall-admin-2024', which put the admin password on screen for anyone who
-// opened /admin — in a repository attendees copy.
+// Deliberately no default. This page previously prefilled and DISPLAYED a
+// constant admin password, putting it on screen for anyone who opened /admin —
+// in a repository attendees copy. The value is not repeated here: naming a
+// retired credential in a public repo republishes it for anyone still using it.
 const DEFAULT_PASSWORD = '';
 
 interface CompanyUser {
