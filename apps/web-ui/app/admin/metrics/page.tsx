@@ -159,13 +159,16 @@ export default function MetricsPage() {
     const peak = Math.max(1, ...buckets.map(b => b.ok + b.err));
     const bw = W / buckets.length;
 
-    // Grey below, red above — the same stacking the rollout page uses, so a
-    // change in the mix reads as a change in shape rather than in shade.
+    // Blue below, red above. Grey was tried here and read as degraded — a washed
+    // out bar looks like a timeout rather than a success, which is the opposite
+    // of what a healthy baseline should convey. Blue is the same one the rollout
+    // page uses for users receiving the feature: in both places it means "this
+    // worked".
     buckets.forEach((b, i) => {
       const x = i * bw;
       const okH = (b.ok / peak) * H;
       const errH = (b.err / peak) * H;
-      ctx.fillStyle = GREY;
+      ctx.fillStyle = BLUE;
       ctx.fillRect(x, H - okH, bw - 4, okH);
       ctx.fillStyle = RED;
       ctx.fillRect(x, H - okH - errH, bw - 4, errH);
@@ -278,7 +281,7 @@ export default function MetricsPage() {
 
       <header style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
         <h1 style={{ fontSize: 'var(--t)', fontWeight: 700, margin: 0, letterSpacing: '-0.02em' }}>
-          Failure rate
+          HTTP health
         </h1>
         <div style={{ display: 'flex', alignItems: 'baseline', gap: 24, flexWrap: 'wrap' }}>
           <span style={{ color: BODY }}>Failures, last 60s:</span>
@@ -344,9 +347,17 @@ export default function MetricsPage() {
         <p style={{ color: RED, margin: 0 }}>401 — sign in first, or the graph means nothing</p>
       )}
 
-      <Sub color={RED} right={data ? `${data.totalErr} of ${data.totalOk + data.totalErr}` : undefined}>
-        Requests that failed:
-      </Sub>
+      {/* Both swatches on one line: two stacked label rows would push the chart
+          down for no gain, and the pairing is the point. */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '1.2em', flexWrap: 'wrap' }}>
+        <Sub color={BLUE}>Served</Sub>
+        <Sub color={RED}>Failed</Sub>
+        {data && (
+          <span style={{ marginLeft: 'auto', color: BODY, fontVariantNumeric: 'tabular-nums' }}>
+            {data.totalErr} of {data.totalOk + data.totalErr}
+          </span>
+        )}
+      </div>
 
       <canvas
         ref={canvas}
