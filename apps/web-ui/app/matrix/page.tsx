@@ -1788,6 +1788,17 @@ function MatrixContent() {
                               Export PDF
                             </button>
                           )}
+                          {fm.isEnabled('recall.auditExport', false) && (
+                            <button
+                              onClick={() => handleExport('xlsx')}
+                              className="w-full px-4 py-2.5 text-left text-sm text-slate-200 hover:bg-slate-700 flex items-center gap-2"
+                            >
+                              <svg className="w-4 h-4 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-6h13m-13 6H4a2 2 0 01-2-2V6a2 2 0 012-2h5m0 13V4m0 0h11a2 2 0 012 2v3" />
+                              </svg>
+                              Export spreadsheet
+                            </button>
+                          )}
                         </div>
                       )}
                     </div>

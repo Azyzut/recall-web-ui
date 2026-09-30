@@ -83,8 +83,7 @@ function Sub({ color, children, right }: {
 }
 
 export default function MetricsPage() {
-  const [password, setPassword] = useState('');
-  const [entered, setEntered] = useState('');
+  const [password, setPassword] = useState('');   // set by the layout's gate
   const [data, setData] = useState<Metrics | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [running, setRunning] = useState(false);
@@ -205,7 +204,7 @@ export default function MetricsPage() {
   const shell: React.CSSProperties = {
     ['--t' as string]: '40px',
     ['--sq' as string]: '44px',
-    minHeight: '100vh',
+    minHeight: '100%',
     background: '#fff',
     color: INK,
     font: 'var(--t)/1.15 "Unica 77", Arial, Helvetica, sans-serif',
@@ -214,43 +213,6 @@ export default function MetricsPage() {
     flexDirection: 'column',
     gap: 18,
   };
-
-  if (!password) {
-    return (
-      <div style={{ ...shell, alignItems: 'center', justifyContent: 'center' }}>
-        <form
-          style={{ display: 'flex', flexDirection: 'column', gap: 16, width: 'min(560px, 90%)' }}
-          onSubmit={e => {
-            e.preventDefault();
-            localStorage.setItem('adminPassword', entered);
-            setPassword(entered);
-          }}
-        >
-          <input
-            type="password"
-            value={entered}
-            onChange={e => setEntered(e.target.value)}
-            placeholder="Admin password"
-            autoFocus
-            style={{
-              font: 'inherit', fontSize: 'var(--t)', padding: '0.16em 0.3em',
-              border: `2px solid ${LINE}`, borderRadius: '0.14em', color: INK,
-            }}
-          />
-          <button
-            type="submit"
-            style={{
-              font: 'inherit', fontSize: 'var(--t)', padding: '0.16em 0.3em',
-              background: BLUE, color: '#fff', border: `2px solid ${BLUE}`,
-              borderRadius: '0.14em', cursor: 'pointer',
-            }}
-          >
-            Open
-          </button>
-        </form>
-      </div>
-    );
-  }
 
   const recentWindow = data
     ? data.buckets.slice(-30).reduce((n, b) => n + b.err, 0)

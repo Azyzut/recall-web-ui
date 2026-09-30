@@ -172,10 +172,13 @@ export default function AdminUserDetailPage() {
   return (
     <div className="min-h-screen bg-gray-900 py-8 px-4">
       <div className="max-w-7xl mx-auto">
-        {/* Back Link */}
-        <Link href="/admin" className="text-blue-400 hover:text-blue-300 mb-4 inline-block">
-          ← Back to Admin Dashboard
-        </Link>
+        {/* Breadcrumb — the section is already lit in the sidebar, but the
+            trail names which account you are inside. */}
+        <nav className="mb-4 text-sm text-gray-500">
+          <Link href="/admin" className="text-blue-400 hover:text-blue-300">Accounts</Link>
+          <span className="mx-2">/</span>
+          <span className="text-gray-300">{company.companyName}</span>
+        </nav>
 
         {/* Company Header */}
         <div className="bg-gray-800 rounded-lg border border-gray-700 p-6 mb-6">
