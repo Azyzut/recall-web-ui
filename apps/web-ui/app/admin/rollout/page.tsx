@@ -174,12 +174,6 @@ export default function RolloutPage() {
 
       {error && <p style={{ color: RED, margin: 0 }}>{error}</p>}
 
-      {data?.sticky === 'indeterminate' && (
-        <p style={{ color: BODY, margin: 0, fontSize: 'calc(var(--t) * 0.55)' }}>
-          Every sample user got the same answer, so stickiness cannot be checked from here.
-          Set a percentage between 1 and 99 and this will confirm itself.
-        </p>
-      )}
 
       {data && !data.fmReady && (
         <p style={{ color: '#E5484D', margin: 0 }}>
@@ -205,13 +199,12 @@ export default function RolloutPage() {
             rollout does.
           </span>
           <span style={{ fontSize: 'calc(var(--t) * 0.55)', color: INK }}>
-            Feature management → <strong>⋯</strong> beside <strong>{data.flag}</strong> →
-            Configure → pick this environment → <strong>⋯</strong> upper right →
-            Flag settings → Stickiness property → <strong>userId</strong> → Save
-            configuration.
+            Feature management → click <strong>{data.flag}</strong> → the
+            <strong> ⋮ </strong> top right → Flag settings → set Stickiness property to
+            <strong> userId</strong> → Save configuration.
           </span>
           <span style={{ fontSize: 'calc(var(--t) * 0.5)', color: BODY }}>
-            It is set per environment, so setting it on another one will not fix this.
+            Set per flag, and it applies across every environment.
           </span>
         </div>
       ) : (
