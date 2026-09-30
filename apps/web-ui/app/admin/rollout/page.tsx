@@ -33,14 +33,16 @@ const FLAGS = [
   'recall.dashboardRedesign',
 ];
 
-const SAMPLES = 200;
 const COLUMNS = 40;
+
+interface Segment { name: string; total: number; enabled: number }
 
 interface Probe {
   flag: string;
   samples: number;
   enabled: number;
   pattern: boolean[];
+  segments: Segment[];
   fmReady: boolean;
   at: number;
 }
@@ -62,7 +64,7 @@ export default function RolloutPage() {
       if (!password) return;
       try {
         const res = await fetch(
-          `/api/admin/rollout-probe?flag=${encodeURIComponent(flag)}&samples=${SAMPLES}`,
+          `/api/admin/rollout-probe?flag=${encodeURIComponent(flag)}`,
           { headers: { 'x-admin-password': password }, cache: 'no-store' }
         );
         if (cancelled) return;
@@ -175,22 +177,41 @@ export default function RolloutPage() {
         </p>
       )}
 
-      <p style={{ display: 'flex', alignItems: 'center', gap: '0.4em', color: BODY, margin: 0 }}>
-        <span style={{
-          display: 'inline-block', width: '0.62em', height: '0.62em',
-          borderRadius: '0.12em', background: BLUE, flex: 'none',
-        }} />
-        Evaluations that received the feature
-      </p>
-
-      <div style={{ display: 'grid', gridTemplateColumns: `repeat(${COLUMNS}, 1fr)`, gap: 4 }}>
-        {(data?.pattern ?? Array<boolean>(SAMPLES).fill(false)).map((on, i) => (
-          <span key={i} style={{
-            display: 'block', aspectRatio: '1', borderRadius: 3,
-            background: on ? BLUE : GREY, transition: 'background .45s ease',
-          }} />
-        ))}
-      </div>
+      {/* One band per company size. A percentage rollout fills all three at
+          roughly the same rate; a target group on companySize fills exactly one,
+          which is the difference the overall number alone would hide. */}
+      {(data?.segments ?? []).map(seg => {
+        const start = (data?.segments ?? [])
+          .slice(0, (data?.segments ?? []).indexOf(seg))
+          .reduce((n, s2) => n + s2.total, 0);
+        const cells = (data?.pattern ?? []).slice(start, start + seg.total);
+        const share = seg.total ? Math.round((seg.enabled / seg.total) * 100) : 0;
+        return (
+          <div key={seg.name} style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <p style={{
+              display: 'flex', alignItems: 'center', gap: '0.4em', color: BODY,
+              margin: 0, fontSize: 'calc(var(--t) * 0.6)',
+            }}>
+              <span style={{
+                display: 'inline-block', width: '0.62em', height: '0.62em',
+                borderRadius: '0.12em', background: share ? BLUE : GREY, flex: 'none',
+              }} />
+              {seg.name}
+              <span style={{ marginLeft: 'auto', fontVariantNumeric: 'tabular-nums' }}>
+                {seg.enabled} of {seg.total} · {share}%
+              </span>
+            </p>
+            <div style={{ display: 'grid', gridTemplateColumns: `repeat(${COLUMNS}, 1fr)`, gap: 4 }}>
+              {cells.map((on, i) => (
+                <span key={i} style={{
+                  display: 'block', aspectRatio: '1', borderRadius: 3,
+                  background: on ? BLUE : GREY, transition: 'background .45s ease',
+                }} />
+              ))}
+            </div>
+          </div>
+        );
+      })}
 
       <p style={{ display: 'flex', alignItems: 'center', gap: '0.4em', color: BODY, margin: 0 }}>
         <span style={{
@@ -204,9 +225,11 @@ export default function RolloutPage() {
               style={{ width: '100%', height: 200, display: 'block' }} />
 
       <p style={{ fontSize: 'calc(var(--t) * 0.45)', color: BODY, margin: 0, maxWidth: '70ch' }}>
-        Each cell is one live evaluation of <strong>{flag}</strong> through the server SDK —
-        measured, not read from configuration. Cells are evaluations rather than users:
-        a percentage rollout splits per evaluation on the server.
+        Each cell is one sample user, evaluated against <strong>{flag}</strong> through the
+        server SDK — measured, not read from configuration. The set is fixed, so raising the
+        percentage adds users rather than reshuffling them. Requires the flag's rollout
+        stickiness property to be <strong>userId</strong>; left at the default the grid still
+        works but changes on every poll.
       </p>
     </div>
   );
