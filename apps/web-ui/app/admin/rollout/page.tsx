@@ -25,6 +25,7 @@ const GREY = '#CCCCCC';   // Black 40 — did not
 const INK = '#1A1A1A';
 const BODY = '#666666';
 const LINE = '#E6E6E6';
+const RED = '#E5484D';   // functional status colour; none exists in the palette
 
 const FLAGS = [
   'recall.exportPdf',
@@ -43,6 +44,8 @@ interface Probe {
   enabled: number;
   pattern: boolean[];
   segments: Segment[];
+  sticky: 'yes' | 'no' | 'indeterminate';
+  mismatches: number;
   fmReady: boolean;
   at: number;
 }
@@ -169,7 +172,14 @@ export default function RolloutPage() {
         )}
       </div>
 
-      {error && <p style={{ color: '#E5484D', margin: 0 }}>{error}</p>}
+      {error && <p style={{ color: RED, margin: 0 }}>{error}</p>}
+
+      {data?.sticky === 'indeterminate' && (
+        <p style={{ color: BODY, margin: 0, fontSize: 'calc(var(--t) * 0.55)' }}>
+          Every sample user got the same answer, so stickiness cannot be checked from here.
+          Set a percentage between 1 and 99 and this will confirm itself.
+        </p>
+      )}
 
       {data && !data.fmReady && (
         <p style={{ color: '#E5484D', margin: 0 }}>
@@ -177,6 +187,35 @@ export default function RolloutPage() {
         </p>
       )}
 
+      {data?.sticky === 'no' ? (
+        // Refusing to draw is the point. With the default stickiness the grid is
+        // technically accurate and completely misleading: it reshuffles every
+        // poll, so it shows a rollout reaching different users each time rather
+        // than the same users keeping the feature. Better to say so than to let
+        // someone present it.
+        <div style={{
+          border: `2px solid ${RED}`, borderRadius: '0.14em',
+          padding: '0.5em 0.6em', display: 'flex', flexDirection: 'column', gap: '0.4em',
+        }}>
+          <strong style={{ color: RED }}>Stickiness property is not set to userId</strong>
+          <span style={{ fontSize: 'calc(var(--t) * 0.55)', color: BODY }}>
+            {data.mismatches} of {data.samples} sample users got two different answers to the
+            same question, so this rollout is bucketing per evaluation rather than per user.
+            The grid would reshuffle every two seconds, which is not what a progressive
+            rollout does.
+          </span>
+          <span style={{ fontSize: 'calc(var(--t) * 0.55)', color: INK }}>
+            Feature management → <strong>⋯</strong> beside <strong>{data.flag}</strong> →
+            Configure → pick this environment → <strong>⋯</strong> upper right →
+            Flag settings → Stickiness property → <strong>userId</strong> → Save
+            configuration.
+          </span>
+          <span style={{ fontSize: 'calc(var(--t) * 0.5)', color: BODY }}>
+            It is set per environment, so setting it on another one will not fix this.
+          </span>
+        </div>
+      ) : (
+        <>
       {/* One band per company size. A percentage rollout fills all three at
           roughly the same rate; a target group on companySize fills exactly one,
           which is the difference the overall number alone would hide. */}
@@ -220,6 +259,8 @@ export default function RolloutPage() {
         }} />
         Share over time, sampled every two seconds
       </p>
+        </>
+      )}
 
       <canvas ref={canvas} width={2000} height={400}
               style={{ width: '100%', height: 200, display: 'block' }} />
